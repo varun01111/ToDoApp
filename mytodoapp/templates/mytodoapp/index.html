@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ToDo List — Focus & Finish</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Bootstrap (you can keep your existing CDN if you prefer) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+        integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+
+  <!-- Optional: clean, modern font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#0f1020;
+      --glass:#ffffff1a;
+      --glass-strong:#ffffff26;
+      --border:#ffffff33;
+      --text:#f5f7fb;
+      --muted:#c8cbe0;
+      --brand1:#6ee7f0;
+      --brand2:#7c6cf3;
+      --accent:#f6a93b;
+      --ok:#22c55e;
+      --danger:#ef4444;
+      --shadow:0 20px 50px rgba(0,0,0,.35);
+    }
+
+    /* ===== Page background: animated multi-stop gradient + soft blobs ===== */
+    html, body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      color: var(--text);
+      background: linear-gradient(120deg, #0e132e, #141b3a 33%, #1a2a6c 60%, #552a7a 85%);
+      background-size: 200% 200%;
+      animation: bgShift 14s ease-in-out infinite;
+      overflow-x: hidden;
+    }
+    @keyframes bgShift {
+      0%, 100% { background-position: 0% 50%; }
+      50%      { background-position: 100% 50%; }
+    }
+    .blob {
+      position: fixed;
+      filter: blur(60px);
+      opacity: .45;
+      z-index: 0;
+      transform: translateZ(0); /* GPU accelerate */
+    }
+    .blob.one {
+      top: -10vh; left: -10vw;
+      width: 45vmax; height: 45vmax;
+      background: radial-gradient(closest-side, #6ee7f0 0%, transparent 70%);
+      animation: float1 24s ease-in-out infinite;
+    }
+    .blob.two {
+      bottom: -15vh; right: -15vw;
+      width: 55vmax; height: 55vmax;
+      background: radial-gradient(closest-side, #7c6cf3 0%, transparent 70%);
+      animation: float2 28s ease-in-out infinite;
+    }
+    .blob.three {
+      top: 40vh; left: 50vw;
+      width: 35vmax; height: 35vmax;
+      background: radial-gradient(closest-side, #f6a93b 0%, transparent 70%);
+      animation: float3 32s ease-in-out infinite;
+    }
+    @keyframes float1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(6vw,5vh)}}
+    @keyframes float2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-5vw,-4vh)}}
+    @keyframes float3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(3vw,-5vh)}}
+
+    /* ===== Navbar ===== */
+    .navbar {
+      background: linear-gradient(90deg, #11152f 0%, #171d3d 50%, #1c2250 100%);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: saturate(140%) blur(8px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+      z-index: 2;
+    }
+    .navbar-brand {
+      font-weight: 800;
+      letter-spacing: .3px;
+      color: var(--text) !important;
+    }
+
+    /* ===== Main card ===== */
+    .shell {
+      position: relative;
+      z-index: 1;
+      padding: 48px 16px 64px;
+    }
+    .todo-card {
+      background: linear-gradient(180deg, #ffffff10, #ffffff08);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+      overflow: hidden;
+      transition: transform .4s ease, box-shadow .4s ease;
+    }
+    .todo-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 30px 70px rgba(0,0,0,.5);
+    }
+    .card-header {
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, #ffffff1a, #ffffff05);
+      color: var(--text);
+    }
+    .card-title {
+      margin: 0;
+      font-weight: 800;
+      letter-spacing: .4px;
+    }
+    .card-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: .95rem;
+    }
+    .card-body {
+      padding: 1.6rem;
+    }
+
+    /* ===== Form styling: works with default {{ form.as_p }} ===== */
+    form p { margin-bottom: 1rem; }
+    label { font-weight: 600; }
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    textarea,
+    select {
+      width: 100%;
+      border-radius: 12px !important;
+      border: 1px solid var(--glass-strong);
+      background: #0f1228cc;
+      color: var(--text);
+      padding: .8rem 1rem;
+      outline: none;
+      transition: box-shadow .2s ease, border-color .2s ease, transform .08s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #7c6cf3;
+      box-shadow: 0 0 0 6px #7c6cf333, inset 0 1px 0 rgba(255,255,255,.04);
+      transform: translateY(-1px);
+    }
+    textarea { min-height: 120px; resize: vertical; }
+
+    /* Django error list */
+    ul.errorlist {
+      list-style: none; padding-left: 0; margin: .25rem 0 .75rem;
+      color: #fff; background: #ef4444cc; border: 1px solid #ef4444;
+      border-radius: 10px; padding: .5rem .75rem; font-weight: 600;
+    }
+
+    /* ===== Gradient button with shine + ripple ===== */
+    .btn-gradient {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      border: 0;
+      color: #0b0f26;
+      font-weight: 800;
+      letter-spacing: .3px;
+      padding: .85rem 1.25rem;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--brand1), var(--brand2) 55%, var(--accent));
+      box-shadow: 0 10px 24px rgba(124,108,243,.45);
+      overflow: hidden;
+      transition: transform .12s ease, box-shadow .2s ease;
+    }
+    .btn-gradient:hover { transform: translateY(-1px); box-shadow: 0 14px 36px rgba(124,108,243,.55); }
+    .btn-gradient:active { transform: translateY(0); }
+
+    .btn-gradient .shine {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent, #ffffff66, transparent);
+      transform: translateX(-200%);
+      transition: transform .8s ease;
+      pointer-events: none;
+    }
+    .btn-gradient:hover .shine { transform: translateX(200%); }
+
+    /* ripple circle */
+    .btn-gradient .ripple {
+      position: absolute; border-radius: 50%;
+      transform: translate(-50%, -50%); pointer-events: none;
+      background: #ffffff55; animation: ripple .6s ease-out forwards;
+    }
+    @keyframes ripple { from { width: 0; height: 0; opacity: .6; } to { width: 400px; height: 400px; opacity: 0; } }
+
+    /* Loading / success states */
+    .btn-gradient.loading { pointer-events: none; opacity: .85; }
+    .btn-gradient .spinner {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid #ffffff; border-top-color: #0b0f26;
+      animation: spin .8s linear infinite; display: none;
+    }
+    .btn-gradient.loading .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Subtle footer ===== */
+    .footer-mini {
+      color: #c9cde6cc; font-size: .9rem;
+    }
+
+    /* ===== Fade-in on mount ===== */
+    .fade-in {
+      animation: fadein .6s ease-out both;
+    }
+    @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+
+<body>
+  <!-- background blobs -->
+  <div class="blob one"></div>
+  <div class="blob two"></div>
+  <div class="blob three"></div>
+
+  <!-- nav -->
+  <nav class="navbar navbar-expand-md">
+    <a class="navbar-brand" href="#">
+      <!-- inline icon -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="margin-right:8px;vertical-align:-3px">
+        <path d="M6 12l3 3 9-9" stroke="#6ee7f0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      To Do List App
+    </a>
+  </nav>
+
+  <!-- main -->
+  <main class="shell">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-xl-6 col-lg-7 col-md-9">
+          <div class="todo-card fade-in">
+            <div class="card-header">
+              <h3 class="card-title">Create a Task</h3>
+              <p class="card-subtitle mb-0">Stay organized with a clean, fast interface.</p>
+            </div>
+            <div class="card-body">
+              <form id="todo-form" method="post" action="">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button id="submitBtn" type="submit" class="btn-gradient mt-2">
+                  <span class="shine"></span>
+                  <span class="spinner" aria-hidden="true"></span>
+                  <span class="btn-label">Add Task</span>
+                  <!-- arrow -->
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 12h14M13 5l7 7-7 7" stroke="#0b0f26" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <p class="text-center mt-4 footer-mini">
+            Pro tip: press <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Enter</kbd> to submit.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Optional Bootstrap JS (not required, but handy) -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+          integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-Fy6S3BOfjHNV1pG8eT+6d2W0r9GqQ8K/uxQYFhQ0lq2L5Fv7K4k2Jk6tBTL3e5Qv"
+          crossorigin="anonymous"></script>
+
+  <script>
+    // Enhance default Django-rendered fields ({{ form.as_p }}) with classes
+    (function enhanceDjangoForm(){
+      const form = document.getElementById('todo-form');
+      if(!form) return;
+
+      const fields = form.querySelectorAll('input, textarea, select');
+      fields.forEach(el => {
+        // add bootstrap-like styling even if not using .form-control from server
+        el.classList.add('form-control');
+        // accessible name/title
+        if(!el.getAttribute('aria-label') && el.name){
+          el.setAttribute('aria-label', el.name.replace(/_/g,' '));
+        }
+      });
+
+      // Submit button ripple + loading state
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.addEventListener('click', function(e){
+        // ripple
+        const r = document.createElement('span');
+        r.className = 'ripple';
+        const rect = this.getBoundingClientRect();
+        r.style.left = (e.clientX - rect.left) + 'px';
+        r.style.top  = (e.clientY - rect.top)  + 'px';
+        this.appendChild(r);
+        setTimeout(() => r.remove(), 650);
+      });
+
+      // Prevent double-submits, show spinner briefly before POST navigation
+      form.addEventListener('submit', function(e){
+        const btn = submitBtn;
+        if(btn.classList.contains('loading')) { e.preventDefault(); return; }
+        btn.classList.add('loading');
+        btn.querySelector('.btn-label').textContent = 'Saving...';
+        // allow native submit to continue; UI shows spinner meanwhile
+      });
+
+      // Keyboard shortcut: Ctrl/Cmd + Enter submits
+      form.addEventListener('keydown', function(e){
+        if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+          e.preventDefault();
+          form.requestSubmit ? form.requestSubmit() : form.submit();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
